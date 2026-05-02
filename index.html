@@ -6,29 +6,38 @@
     <title>Smart AI Checking - By Vinh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- TÍCH HỢP THƯ VIỆN AI -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600;700&display=swap');
         :root { --primary: #007bff; --secondary: #6610f2; --bg: #f8fafc; }
-        body { background-color: var(--bg); color: #1e293b; font-family: 'Inter', sans-serif; min-height: 100vh; }
+        body { background-color: var(--bg); color: #1e293b; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 1.25rem; box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07); }
         
-        /* Scanner & Camera */
-        .scanner-container { position: relative; overflow: hidden; background: #000; border-radius: 1rem; }
-        .scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); box-shadow: 0 0 15px var(--primary); animation: scan 3s ease-in-out infinite; z-index: 10; display: none; }
-        @keyframes scan { 0%, 100% { top: 0%; } 50% { top: 100%; } }
+        /* Camera Container */
+        .scanner-container { position: relative; overflow: hidden; background: radial-gradient(circle, #1a202c 0%, #000000 100%); border-radius: 1rem; border: 2px solid rgba(0, 123, 255, 0.1); }
 
-        /* Avengers Animation Overlay */
-        #ai-overlay { display: none; position: absolute; inset: 0; background: rgba(0, 123, 255, 0.1); border: 2px solid var(--primary); z-index: 20; pointer-events: none; }
-        .hud-corner { position: absolute; width: 20px; height: 20px; border: 3px solid var(--primary); }
-        .scanning-text { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: var(--primary); font-family: 'Orbitron'; font-size: 10px; animation: blink 0.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        /* 1. Máy quét dọc LIÊN TỤC */
+        .constant-scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(to right, transparent, var(--primary), transparent); box-shadow: 0 0 15px var(--primary); animation: constantScan 4s linear infinite; z-index: 5; display: none; opacity: 0.7; }
+        @keyframes constantScan { 0% { top: -5%; } 100% { top: 105%; } }
 
+        /* 2. Avengers HUD Overlay (Khi quét AI) */
+        #ai-overlay { display: none; position: absolute; inset: 0; background: rgba(0, 123, 255, 0.1); border: 1px solid rgba(0, 123, 255, 0.3); z-index: 20; pointer-events: none; animation: pulseBg 1.5s infinite; }
+        @keyframes pulseBg { 0%, 100% { background: rgba(0, 123, 255, 0.05); } 50% { background: rgba(0, 123, 255, 0.15); } }
+        .hud-corner { position: absolute; width: 30px; height: 30px; border: 2px solid var(--primary); filter: drop-shadow(0 0 5px var(--primary)); }
+        .scanning-text { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: var(--primary); font-family: 'Orbitron'; font-size: 11px; font-weight: bold; text-shadow: 0 0 10px var(--primary); }
+        
         /* Modal Phóng to */
         #image-modal { display: none; position: fixed; z-index: 1000; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); flex-direction: column; align-items: center; justify-content: center; }
         #zoom-img { transition: transform 0.2s ease; max-width: 90%; max-height: 80%; border-radius: 4px; }
-        .modal-close-btn { position: absolute; top: 20px; right: 20px; width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; items-center justify-content: center; color: white; font-size: 24px; cursor: pointer; transition: 0.3s; z-index: 1100; }
-        .modal-close-btn:hover { background: #ff4757; transform: rotate(90deg); }
+        .modal-close-btn { position: absolute; top: 25px; right: 25px; width: 45px; height: 45px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; items-center justify-content: center; color: white; cursor: pointer; z-index: 1100; border: 1px solid rgba(255,255,255,0.2); }
+
+        .btn-gradient { background: linear-gradient(135deg, var(--primary), var(--secondary)); transition: 0.3s; color: white; }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3); }
 
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -37,82 +46,83 @@
 <body class="p-4 md:p-8">
 
     <header class="max-w-6xl mx-auto mb-8 text-center">
-        <h1 class="tech-font text-3xl md:text-4xl font-extrabold mb-1 text-slate-800">SMART <span class="text-blue-600">AI CHECKING</span></h1>
-        <p class="text-slate-500 tracking-[0.2em] uppercase text-[10px] font-bold">Visionary System Control • <span class="text-blue-600">By Vinh</span></p>
+        <h1 class="tech-font text-3xl md:text-4xl font-extrabold mb-1 text-slate-800 tracking-tighter">SMART <span class="text-blue-600">AI CHECKING</span></h1>
+        <p class="text-slate-500 tracking-[0.2em] uppercase text-[9px] font-bold">Visionary System Control • <span class="text-blue-600">By Vinh</span></p>
     </header>
 
     <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Left Column -->
+        <!-- CỘT TRÁI -->
         <div class="lg:col-span-5 space-y-6">
             <div class="glass p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-bold text-slate-700 flex items-center"><i class="fas fa-microchip mr-2 text-blue-500"></i> AI SCANNER</h2>
-                    <span id="sys-status" class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">SYSTEM READY</span>
+                    <h2 class="font-bold text-slate-700 flex items-center text-sm tracking-wide"><i class="fas fa-satellite-dish mr-2 text-blue-500"></i> AI RADAR</h2>
+                    <span id="sys-status" class="text-[9px] font-black text-blue-600 bg-blue-100 px-3 py-1 rounded-full border border-blue-200 uppercase tracking-widest">Loading AI...</span>
                 </div>
                 
                 <div id="camera-box" class="scanner-container aspect-video flex items-center justify-center">
-                    <div id="scanner-line" class="scanner-line"></div>
+                    <!-- Đường quét liên tục -->
+                    <div id="constant-line" class="constant-scan-line"></div>
+                    
                     <!-- Avengers HUD -->
                     <div id="ai-overlay">
-                        <div class="hud-corner top-0 left-0 border-r-0 border-b-0"></div>
-                        <div class="hud-corner top-0 right-0 border-l-0 border-b-0"></div>
-                        <div class="hud-corner bottom-0 left-0 border-r-0 border-t-0"></div>
-                        <div class="hud-corner bottom-0 right-0 border-l-0 border-t-0"></div>
-                        <div class="scanning-text tracking-widest text-blue-400">ANALYZING DATABASE...</div>
+                        <div class="hud-corner top-4 left-4 border-r-0 border-b-0"></div>
+                        <div class="hud-corner top-4 right-4 border-l-0 border-b-0"></div>
+                        <div class="hud-corner bottom-4 left-4 border-r-0 border-t-0"></div>
+                        <div class="hud-corner bottom-4 right-4 border-l-0 border-t-0"></div>
+                        <div class="scanning-text tracking-[0.3em] uppercase">Analyzing Matrix...</div>
                     </div>
-                    <i id="cam-placeholder" class="fas fa-camera text-4xl text-slate-300"></i>
+
+                    <i id="cam-placeholder" class="fas fa-video text-5xl text-slate-700/50"></i>
                     <video id="video" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline></video>
-                    <canvas id="canvas" class="hidden"></canvas>
+                    <!-- Canvas ẩn để chụp ảnh cho AI -->
+                    <canvas id="canvas" width="224" height="224" class="hidden"></canvas>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-4">
-                    <button onclick="startCamera()" class="btn-gradient py-3 rounded-xl font-bold text-xs uppercase tracking-wider"><i class="fas fa-video mr-2"></i> Mở Camera</button>
-                    <button onclick="runAIScan()" class="bg-slate-800 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider"><i class="fas fa-atom mr-2"></i> Tìm AI</button>
+                    <button onclick="startCamera()" class="btn-gradient py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest"><i class="fas fa-power-off mr-2"></i> Kích Hoạt</button>
+                    <button onclick="runAIScan()" class="bg-slate-900 text-white py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest hover:bg-black transition"><i class="fas fa-atom mr-2"></i> Tìm AI</button>
                 </div>
             </div>
 
-            <!-- Add Module -->
             <div class="glass p-5">
-                <h2 class="font-bold text-slate-700 mb-4 flex items-center"><i class="fas fa-plus-square mr-2 text-indigo-500"></i> THÊM MỚI</h2>
-                <div class="space-y-3">
-                    <input type="text" id="new-id" placeholder="ID (Ví dụ: 8383R)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                    <input type="text" id="new-code" placeholder="Mã liệu (Ví dụ: 3478290301)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                    <button onclick="alert('Tính năng đang kết nối GAS...')" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition">Gửi phê duyệt</button>
+                <h2 class="font-bold text-slate-700 mb-4 flex items-center text-sm uppercase tracking-wider"><i class="fas fa-plus-circle mr-2 text-indigo-500"></i> Register Item</h2>
+                <div class="space-y-3 text-sm">
+                    <input type="text" id="new-id" placeholder="ID (Ví dụ: 8383R)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none">
+                    <input type="text" id="new-code" placeholder="Mã liệu (Ví dụ: 3478290301)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none">
+                    <button class="w-full bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest">Push to Cloud</button>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column -->
+        <!-- CỘT PHẢI -->
         <div class="lg:col-span-7 space-y-4">
-            <div class="glass p-3 flex gap-3">
-                <input type="text" id="filter-code" onkeyup="filterData()" placeholder="Tìm mã liệu..." class="flex-grow bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none">
-                <input type="text" id="filter-id" onkeyup="filterData()" placeholder="ID..." class="w-32 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none">
+            <div class="glass p-3 flex gap-3 shadow-sm text-sm">
+                <input type="text" id="filter-code" onkeyup="filterData()" placeholder="Tìm mã liệu..." class="flex-grow bg-transparent p-2 outline-none">
+                <input type="text" id="filter-id" onkeyup="filterData()" placeholder="ID..." class="w-24 bg-slate-100 rounded-lg p-2 outline-none">
             </div>
 
             <div class="glass p-5">
-                <h2 class="font-bold text-slate-700 mb-4">DỮ LIỆU KHO <span id="count-label" class="text-xs font-normal text-slate-400"></span></h2>
-                <div id="product-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                    <!-- Items -->
+                <h2 class="font-bold text-slate-700 mb-4 text-sm flex items-center justify-between">
+                    DATABASE MASTER <span id="count-label" class="text-[10px] font-normal text-slate-400"></span>
+                </h2>
+                <div id="product-list" class="space-y-3 max-h-[520px] overflow-y-auto pr-2">
+                    <!-- Items sẽ hiện ở đây -->
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- IMAGE MODAL (FIXED) -->
+    <!-- MODAL XEM CHI TIẾT -->
     <div id="image-modal">
-        <div class="modal-close-btn" onclick="closeModal()">
-            <i class="fas fa-times"></i>
+        <div class="modal-close-btn" onclick="closeModal()"><i class="fas fa-times"></i></div>
+        <div class="relative w-full h-full flex items-center justify-center p-6 overflow-hidden">
+            <img id="zoom-img" src="" alt="Detail View" draggable="false">
         </div>
-        
-        <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
-            <img id="zoom-img" src="" alt="Zoom" draggable="false">
-        </div>
-
-        <div class="absolute bottom-10 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-6">
-            <button onclick="adjustZoom(-0.2)" class="text-white hover:text-blue-400"><i class="fas fa-minus"></i></button>
-            <input type="range" id="zoom-range" min="0.5" max="3" step="0.1" value="1" oninput="applyZoom(this.value)" class="w-40">
-            <button onclick="adjustZoom(0.2)" class="text-white hover:text-blue-400"><i class="fas fa-plus"></i></button>
-            <button onclick="rotateImage()" class="text-white hover:text-blue-400 border-l border-white/20 pl-4"><i class="fas fa-sync-alt"></i></button>
+        <div class="absolute bottom-8 bg-white/10 backdrop-blur-xl px-6 py-4 rounded-3xl flex items-center gap-8 border border-white/10 shadow-2xl">
+            <button onclick="adjustZoom(-0.25)" class="text-white/70 hover:text-white"><i class="fas fa-search-minus text-lg"></i></button>
+            <input type="range" id="zoom-range" min="0.5" max="3" step="0.1" value="1" oninput="applyZoom(this.value)" class="w-32 accent-blue-500">
+            <button onclick="adjustZoom(0.25)" class="text-white/70 hover:text-white"><i class="fas fa-search-plus text-lg"></i></button>
+            <button onclick="rotateImage()" class="text-white/70 hover:text-white border-l border-white/20 pl-4"><i class="fas fa-redo-alt"></i></button>
         </div>
     </div>
 
@@ -120,81 +130,128 @@
         // --- CẤU HÌNH ---
         const GAS_URL = "DÁN_WEB_APP_URL_CỦA_ANH_VÀO_ĐÂY";
         let inventoryData = [];
+        let net; // Biến chứa bộ não AI
         let currentScale = 1;
         let currentRotation = 0;
 
-        // --- TẢI DỮ LIỆU TỪ GOOGLE SHEETS ---
+        // 1. KHỞI TẠO BỘ NÃO AI
+        async function initAI() {
+            try {
+                net = await mobilenet.load();
+                document.getElementById('sys-status').innerText = "AI ONLINE";
+                document.getElementById('sys-status').classList.replace('text-blue-600', 'text-green-600');
+                document.getElementById('sys-status').classList.replace('bg-blue-100', 'bg-green-100');
+            } catch (e) {
+                document.getElementById('sys-status').innerText = "AI ERROR";
+            }
+        }
+
+        // 2. TẢI DỮ LIỆU
         async function loadData() {
-            document.getElementById('count-label').innerText = "Đang tải dữ liệu...";
             try {
                 const response = await fetch(GAS_URL);
                 inventoryData = await response.json();
                 renderList(inventoryData);
             } catch (err) {
-                console.error("Lỗi tải Sheet:", err);
-                // Nếu chưa có GAS, dùng tạm data mẫu để anh test UI
-                inventoryData = [{ id: "8383R", code: "3478290301", desc: "MẪU TEST", img: "https://via.placeholder.com/500", vector: "" }];
+                // Data mẫu nếu chưa có link GAS
+                inventoryData = [{ id: "8383R", code: "3478290301", desc: "MẪU TEST", img: "https://via.placeholder.com/600", vector: "" }];
                 renderList(inventoryData);
             }
         }
 
+        // 3. HÀM TÌM KIẾM AI THỰC THỤ
+        async function runAIScan() {
+            if (!net) return alert("AI đang khởi động, vui lòng đợi...");
+            const video = document.getElementById('video');
+            if (video.classList.contains('hidden')) return alert("Vui lòng kích hoạt Camera trước!");
+
+            // Bật hiệu ứng Avengers
+            document.getElementById('ai-overlay').style.display = 'block';
+
+            // Chụp ảnh và phân tích
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 224, 224);
+
+            const activation = net.infer(canvas, true);
+            const capturedVector = await activation.data();
+
+            // So sánh với danh sách trong kho
+            const results = inventoryData.map(item => {
+                if (!item.vector) return { ...item, score: 0 };
+                const dbVector = item.vector.split('|').map(Number);
+                const score = cosineSimilarity(capturedVector, dbVector);
+                return { ...item, score: score };
+            });
+
+            // Sắp xếp giống nhất lên đầu
+            results.sort((a, b) => b.score - a.score);
+
+            setTimeout(() => {
+                document.getElementById('ai-overlay').style.display = 'none';
+                renderList(results);
+                if(results[0].score > 0.5) {
+                    alert(`Đã tìm thấy: ${results[0].code} (Khớp ${(results[0].score * 100).toFixed(1)}%)`);
+                } else {
+                    alert("Không tìm thấy mã hàng nào khớp trong kho!");
+                }
+            }, 2000);
+        }
+
+        // Hàm toán học tính độ tương đồng
+        function cosineSimilarity(vecA, vecB) {
+            let dotProduct = 0, mA = 0, mB = 0;
+            for (let i = 0; i < vecA.length; i++) {
+                dotProduct += vecA[i] * vecB[i];
+                mA += vecA[i] * vecA[i];
+                mB += vecB[i] * vecB[i];
+            }
+            return dotProduct / (Math.sqrt(mA) * Math.sqrt(mB));
+        }
+
+        // 4. HIỂN THỊ DANH SÁCH
         function renderList(data) {
             const listContainer = document.getElementById('product-list');
-            document.getElementById('count-label').innerText = `(${data.length} mã)`;
+            document.getElementById('count-label').innerText = `${data.length} RECORDS`;
             listContainer.innerHTML = '';
             data.forEach(item => {
+                const matchHtml = item.score ? `<span class="text-[9px] text-blue-600 font-bold block">${(item.score*100).toFixed(0)}% MATCH</span>` : '';
                 listContainer.innerHTML += `
-                    <div class="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-2xl hover:border-blue-300 transition-all">
-                        <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in" onclick="openModal('${item.img}', '${item.code}')">
+                    <div class="flex items-center gap-4 p-3.5 bg-white border border-slate-100 rounded-2xl hover:border-blue-400 transition-all duration-300">
+                        <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 cursor-zoom-in shadow-inner" onclick="openModal('${item.img}', '${item.code}')">
                             <img src="${item.img}" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-grow">
                             <h4 class="font-bold text-slate-800 text-sm tracking-tight">${item.code}</h4>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">ID: ${item.id} • ${item.desc}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">ID: ${item.id} • ${item.desc}</p>
                         </div>
-                        <button onclick="openModal('${item.img}', '${item.code}')" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition">
-                            <i class="fas fa-expand-alt text-xs"></i>
-                        </button>
+                        <div class="text-right">
+                            ${matchHtml}
+                            <button onclick="openModal('${item.img}', '${item.code}')" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
+                                <i class="fas fa-expand-alt text-xs"></i>
+                            </button>
+                        </div>
                     </div>`;
             });
         }
 
-        // --- CAMERA & AI ANIMATION ---
+        // 5. CAMERA & MODAL
         async function startCamera() {
             const video = document.getElementById('video');
-            const placeholder = document.getElementById('cam-placeholder');
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
                 video.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                document.getElementById('scanner-line').style.display = 'block';
-            } catch (err) { alert("Lỗi camera: " + err); }
+                document.getElementById('cam-placeholder').classList.add('hidden');
+                document.getElementById('constant-line').style.display = 'block';
+            } catch (err) { alert("Vui lòng cấp quyền Camera!"); }
         }
 
-        function runAIScan() {
-            const overlay = document.getElementById('ai-overlay');
-            overlay.style.display = 'block';
-            
-            // Hiệu ứng "Avengers" Scan trong 3 giây rồi tắt
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                alert("AI: Đã nhận diện thành công! Đang lọc danh sách...");
-                // Sau này logic so khớp Vector sẽ nằm ở đây
-            }, 3000);
-        }
-
-        // --- IMAGE MODAL (FIXED CLOSE) ---
         function openModal(imgSrc, code) {
-            const modal = document.getElementById('image-modal');
-            const img = document.getElementById('zoom-img');
-            img.src = imgSrc;
-            modal.style.display = 'flex';
-            currentScale = 1;
-            currentRotation = 0;
-            applyZoom(1);
-            // Vô hiệu hóa cuộn trang khi mở ảnh
+            document.getElementById('zoom-img').src = imgSrc;
+            document.getElementById('image-modal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            applyZoom(1);
         }
 
         function closeModal() {
@@ -213,12 +270,8 @@
             if(newZoom >= 0.5 && newZoom <= 3) applyZoom(newZoom);
         }
 
-        function rotateImage() {
-            currentRotation += 90;
-            applyZoom(currentScale);
-        }
+        function rotateImage() { currentRotation += 90; applyZoom(currentScale); }
 
-        // --- SEARCH ---
         function filterData() {
             const codeVal = document.getElementById('filter-code').value.toLowerCase();
             const idVal = document.getElementById('filter-id').value.toLowerCase();
@@ -229,7 +282,8 @@
             renderList(filtered);
         }
 
-        // Khởi chạy
+        // Khởi chạy hệ thống
+        initAI();
         loadData();
     </script>
 </body>
