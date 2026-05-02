@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart AI Inventory - By Vinh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary: #007bff;
+            --secondary: #6610f2;
+            --bg: #f8fafc;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(0, 123, 255, 0.05) 0%, transparent 30%),
+                radial-gradient(circle at 100% 100%, rgba(102, 16, 242, 0.05) 0%, transparent 30%);
+            min-height: 100vh;
+        }
+
+        .tech-font { font-family: 'Orbitron', sans-serif; }
+
+        /* Kính trắng hiện đại */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+        }
+
+        /* Scanner Animation */
+        .scanner-container {
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
+            background: #e2e8f0;
+        }
+
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            animation: scan 3s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0%, 100% { top: 0%; }
+            50% { top: 100%; }
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Image Zoom Styles */
+        #image-modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        #zoom-img {
+            transition: transform 0.25s ease;
+            cursor: move;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto mb-8 text-center">
+        <h1 class="tech-font text-3xl md:text-4xl font-extrabold mb-1 tracking-tight text-slate-800">
+            SMART <span class="text-blue-600">INVENTORY</span>
+        </h1>
+        <p class="text-slate-500 tracking-[0.2em] uppercase text-[10px] font-bold">AI Vision System Control • <span class="text-blue-600">By Vinh</span></p>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column -->
+        <div class="lg:col-span-5 space-y-6">
+            <!-- Scanner -->
+            <div class="glass p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-slate-700 flex items-center"><i class="fas fa-microchip mr-2 text-blue-500"></i> AI SCANNER</h2>
+                    <span class="flex items-center text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-1 animate-ping"></span> ONLINE
+                    </span>
+                </div>
+                
+                <div id="camera-box" class="scanner-container aspect-video rounded-xl flex items-center justify-center">
+                    <div class="scanner-line"></div>
+                    <i class="fas fa-camera text-4xl text-slate-300"></i>
+                    <video id="video" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline></video>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="startCamera()" class="btn-gradient py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center">
+                        <i class="fas fa-video mr-2 text-sm"></i> Mở Camera
+                    </button>
+                    <button onclick="captureImage()" class="bg-slate-800 text-white hover:bg-slate-900 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center transition">
+                        <i class="fas fa-search-plus mr-2 text-sm"></i> Tìm AI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add Module -->
+            <div class="glass p-5">
+                <h2 class="font-bold text-slate-700 mb-4 flex items-center"><i class="fas fa-plus-square mr-2 text-indigo-500"></i> THÊM MỚI</h2>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <label class="text-[10px] font-bold text-slate-400 absolute left-3 top-1">MÃ SẢN PHẨM</label>
+                        <input type="text" id="new-code" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pt-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                    </div>
+                    <div class="relative">
+                        <label class="text-[10px] font-bold text-slate-400 absolute left-3 top-1">MÔ TẢ CHI TIẾT</label>
+                        <input type="text" id="new-desc" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pt-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                    </div>
+                    <button onclick="addNewItem()" class="w-full bg-slate-100 text-slate-700 border border-slate-200 hover:bg-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition">Lưu vào hệ thống</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-7 space-y-4">
+            <!-- Search -->
+            <div class="glass p-3 flex flex-wrap md:flex-nowrap gap-3">
+                <div class="relative flex-grow">
+                    <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="filter-code" onkeyup="filterData()" placeholder="Tìm theo mã hàng..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                </div>
+                <div class="relative flex-grow">
+                    <i class="fas fa-tag absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="filter-id" onkeyup="filterData()" placeholder="ID..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="glass p-5">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="font-bold text-slate-700">DỮ LIỆU KHO <span id="count-label" class="ml-2 text-xs font-normal text-slate-400"></span></h2>
+                    <div class="flex gap-2">
+                        <button class="p-2 text-slate-400 hover:text-blue-500"><i class="fas fa-sort-alpha-down"></i></button>
+                        <button class="p-2 text-slate-400 hover:text-blue-500"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+
+                <div id="product-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                    <!-- Items -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- IMAGE VIEWER MODAL (PHÓNG TO) -->
+    <div id="image-modal" class="flex flex-col items-center justify-center p-4">
+        <div class="absolute top-5 right-5 flex gap-4">
+            <button onclick="rotateImage()" class="bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full transition"><i class="fas fa-sync-alt"></i></button>
+            <button onclick="closeModal()" class="bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full transition"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="relative overflow-hidden w-full h-full flex items-center justify-center">
+            <img id="zoom-img" src="" class="max-w-full max-h-full shadow-2xl rounded-sm">
+        </div>
+
+        <div class="absolute bottom-10 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-6">
+            <button onclick="adjustZoom(-0.2)" class="text-white hover:text-blue-400"><i class="fas fa-search-minus text-xl"></i></button>
+            <input type="range" id="zoom-range" min="0.5" max="3" step="0.1" value="1" oninput="applyZoom(this.value)" class="w-40 accent-blue-500">
+            <button onclick="adjustZoom(0.2)" class="text-white hover:text-blue-400"><i class="fas fa-search-plus text-xl"></i></button>
+        </div>
+        <div id="modal-caption" class="absolute bottom-24 text-white font-bold tracking-widest tech-font"></div>
+    </div>
+
+    <script>
+        let inventoryData = [
+            { id: "001", code: "3405340201", desc: "GLIDE BRK LHF", img: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=500" },
+            { id: "002", code: "3405350001", desc: "GLIDE BRK RHF", img: "https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?w=500" },
+            { id: "003", code: "3405710001", desc: "GLIDER SIDE PLATE", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500" },
+        ];
+
+        let currentScale = 1;
+        let currentRotation = 0;
+
+        function renderList(data) {
+            const listContainer = document.getElementById('product-list');
+            document.getElementById('count-label').innerText = `(${data.length} mã hàng)`;
+            listContainer.innerHTML = '';
+
+            data.forEach(item => {
+                listContainer.innerHTML += `
+                    <div class="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-2xl hover:border-blue-300 hover:shadow-md transition-all group">
+                        <div class="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in" onclick="openModal('${item.img}', '${item.code}')">
+                            <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-slate-800 text-sm mb-0.5 tracking-tight">${item.code}</h4>
+                            <p class="text-[11px] text-slate-400 uppercase font-bold tracking-wide">${item.desc}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openModal('${item.img}', '${item.code}')" class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- IMAGE MODAL LOGIC ---
+        function openModal(imgSrc, code) {
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('zoom-img');
+            const caption = document.getElementById('modal-caption');
+            img.src = imgSrc;
+            caption.innerText = code;
+            modal.style.display = 'flex';
+            currentScale = 1;
+            currentRotation = 0;
+            applyZoom(1);
+        }
+
+        function closeModal() {
+            document.getElementById('image-modal').style.display = 'none';
+        }
+
+        function applyZoom(val) {
+            currentScale = val;
+            document.getElementById('zoom-range').value = val;
+            document.getElementById('zoom-img').style.transform = `scale(${currentScale}) rotate(${currentRotation}deg)`;
+        }
+
+        function adjustZoom(delta) {
+            let newZoom = parseFloat(currentScale) + delta;
+            if(newZoom >= 0.5 && newZoom <= 3) applyZoom(newZoom);
+        }
+
+        function rotateImage() {
+            currentRotation += 90;
+            applyZoom(currentScale);
+        }
+
+        // --- FILTER & CAMERA LOGIC ---
+        function filterData() {
+            const codeVal = document.getElementById('filter-code').value.toLowerCase();
+            const idVal = document.getElementById('filter-id').value.toLowerCase();
+            const filtered = inventoryData.filter(item => 
+                item.code.toLowerCase().includes(codeVal) && item.id.toLowerCase().includes(idVal)
+            );
+            renderList(filtered);
+        }
+
+        async function startCamera() {
+            const video = document.getElementById('video');
+            const icon = document.querySelector('#camera-box i');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                icon.classList.add('hidden');
+            } catch (err) { alert("Lỗi camera: " + err); }
+        }
+
+        function addNewItem() {
+            const code = document.getElementById('new-code').value;
+            const desc = document.getElementById('new-desc').value;
+            if(!code) return alert("Vui lòng nhập mã!");
+            inventoryData.unshift({ id: Date.now().toString().slice(-3), code, desc, img: "https://via.placeholder.com/500?text=NEW+IMAGE" });
+            renderList(inventoryData);
+            document.getElementById('new-code').value = '';
+            document.getElementById('new-desc').value = '';
+        }
+
+        function captureImage() {
+            alert("Hệ thống đang sẵn sàng tích hợp AI để quét hình ảnh này...");
+        }
+
+        // Init
+        renderList(inventoryData);
+    </script>
+</body>
+</html>
