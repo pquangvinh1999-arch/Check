@@ -22,57 +22,54 @@
 
         .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border: 1px solid white; border-radius: 28px; box-shadow: 0 15px 50px rgba(0,0,0,0.04); }
         .camera-viewport { position: relative; overflow: hidden; background: #000; border-radius: 24px; border: 4px solid white; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-
-        .laser-scanner {
-            position: absolute; top: 0; left: 0; width: 100%; height: 3px;
-            background: linear-gradient(to right, transparent, var(--cyan), #fff, var(--cyan), transparent);
-            box-shadow: 0 0 20px var(--cyan); animation: moveLaser 3.5s linear infinite; z-index: 20; display: none;
-        }
+        .laser-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(to right, transparent, var(--cyan), #fff, var(--cyan), transparent); box-shadow: 0 0 20px var(--cyan); animation: moveLaser 3.5s linear infinite; z-index: 20; display: none; }
         @keyframes moveLaser { 0% { top: -2%; } 100% { top: 102%; } }
 
         #holo-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 15; pointer-events: none; mix-blend-mode: screen; }
-
-        #object-flare {
-            display: none; position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%;
-            box-shadow: 0 0 100px 50px white, 0 0 200px 100px var(--cyan);
-            z-index: 40; transform: translate(-50%, -50%); animation: flareEffect 0.7s ease-out forwards;
-        }
+        #object-flare { display: none; position: absolute; width: 10px; height: 10px; background: white; border-radius: 50%; box-shadow: 0 0 100px 50px white, 0 0 200px 100px var(--cyan); z-index: 40; transform: translate(-50%, -50%); animation: flareEffect 0.7s ease-out forwards; }
         @keyframes flareEffect { 0% { scale: 0; opacity: 1; } 100% { scale: 12; opacity: 0; } }
 
         #ai-hud { display: none; position: absolute; inset: 0; z-index: 30; pointer-events: none; }
         .hud-corner { position: absolute; width: 40px; height: 40px; border: 2px solid var(--cyan); filter: drop-shadow(0 0 10px var(--cyan)); opacity: 0.6; }
-        
-        #lock-timer {
-            position: absolute; top: 25px; left: 50%; transform: translateX(-50%);
-            width: 200px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; display: none; z-index: 35;
-        }
-        #lock-progress { width: 0%; height: 100%; background: var(--cyan); transition: width 2s linear; }
+        #lock-timer { position: absolute; top: 25px; left: 50%; transform: translateX(-50%); width: 200px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; display: none; z-index: 35; }
+        #lock-progress { width: 0%; height: 100%; background: var(--cyan); box-shadow: 0 0 15px var(--cyan); transition: width 2s linear; }
 
         .btn-premium { background: linear-gradient(135deg, #0062ff, #00d4ff); color: white; transition: 0.4s; border: none; }
         .btn-premium:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0, 98, 255, 0.4); }
+        .btn-tool { background: #000; color: var(--cyan); border: 1px solid var(--cyan); font-family: 'Orbitron'; font-size: 10px; transition: 0.3s; }
+        .btn-tool:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan); }
 
         #image-modal { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(255,255,255,0.96); backdrop-filter: blur(25px); align-items: center; justify-content: center; }
         #zoom-img { transition: transform 0.3s ease; max-width: 85%; max-height: 80%; border-radius: 16px; box-shadow: 0 50px 100px rgba(0,0,0,0.1); }
-
         .haptic-shake { animation: shake 0.25s ease-in-out; }
         @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-5px, 5px); } 75% { transform: translate(5px, -5px); } }
+
+        /* LOADING BAR AI */
+        #main-loading-box { position: fixed; top: 0; left: 0; width: 100%; height: 4px; z-index: 9999; display: none; }
+        #main-loading-bar { height: 100%; background: var(--cyan); width: 0%; transition: width 0.3s; box-shadow: 0 0 10px var(--cyan); }
     </style>
 </head>
 <body class="p-4 md:p-10">
+    <div id="main-loading-box"><div id="main-loading-bar"></div></div>
 
-    <header class="max-w-6xl mx-auto mb-10 text-center text-center">
+    <header class="max-w-6xl mx-auto mb-10 text-center relative">
+        <a href="https://pquangvinh1999-arch.github.io/vector/" class="absolute left-0 top-1/2 -translate-y-1/2 btn-tool px-4 py-2 rounded-full hidden md:block">
+            <i class="fas fa-microchip mr-2"></i> TÁCH VECTOR
+        </a>
         <h1 class="tech-font text-4xl md:text-5xl font-black mb-2 text-slate-900 tracking-tighter italic uppercase">
             Smart <span class="text-blue-600 font-black">AI</span> Checking
         </h1>
         <p class="text-slate-400 tracking-[0.4em] uppercase text-[10px] font-bold">Advanced Inventory System • <span class="text-blue-600">By Vinh</span></p>
+        <a href="https://pquangvinh1999-arch.github.io/vector/" class="mt-4 inline-block btn-tool px-4 py-2 rounded-full md:hidden">TÁCH VECTOR</a>
     </header>
 
     <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- LEFT COLUMN -->
         <div class="lg:col-span-5 space-y-8">
             <div class="glass-card p-6">
                 <div class="flex items-center justify-between mb-6 text-sm">
-                    <h2 class="font-black text-slate-800 tech-font uppercase italic text-[11px]"><i class="fas fa-satellite-dish mr-2 text-blue-600"></i> AI RADAR v4.0</h2>
-                    <span id="sys-status" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-widest border border-blue-100 italic">Initializing...</span>
+                    <h2 class="font-black text-slate-800 tech-font uppercase italic text-[11px]"><i class="fas fa-satellite-dish mr-2 text-blue-600"></i> AI RADAR v4.1</h2>
+                    <span id="sys-status" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-widest border border-blue-100 italic">SYSTEM STANDBY</span>
                 </div>
                 
                 <div class="camera-viewport aspect-video flex items-center justify-center" id="cam-container">
@@ -97,17 +94,18 @@
                     <button id="scan-btn" onclick="runTargetScan()" class="bg-slate-900 text-white py-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-black transition shadow-xl"><i class="fas fa-atom mr-2 text-sm"></i> Tìm AI</button>
                 </div>
             </div>
-            <!-- Module thêm mới giữ nguyên cấu trúc UI của anh -->
+
             <div class="glass-card p-6 text-sm">
                 <h3 class="font-bold text-slate-800 text-xs uppercase tracking-widest mb-4 flex items-center"><i class="fas fa-plus-circle mr-2 text-indigo-500"></i> Register New Item</h3>
                 <div class="space-y-4">
                     <input type="text" id="new-id" placeholder="ID (Ví dụ: 8383R)" class="w-full bg-white border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20">
                     <input type="text" id="new-code" placeholder="Mã hàng hóa..." class="w-full bg-white border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500/20">
-                    <button class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest">Push to database</button>
+                    <button class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest">Push to Cloud</button>
                 </div>
             </div>
         </div>
 
+        <!-- RIGHT COLUMN -->
         <div class="lg:col-span-7 space-y-6">
             <div class="glass-card p-4 flex gap-4 shadow-sm">
                 <input type="text" id="filter-code" onkeyup="filterData()" placeholder="Search PN Number..." class="flex-grow bg-transparent p-2 outline-none text-sm font-semibold">
@@ -133,20 +131,37 @@
     </div>
 
     <script type="module">
-        const GAS_URL = "DÁN_LINK_GAS_CỦA_ANH_VÀO_ĐÂY";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzm6mmH5It0vXdPn38Onn3ouwlawvIdwVzDXF8tSNoT6HFDGwT5_piL5Oir5JnYU08kBg/exec";
         let inventoryData = [];
         let model, processor;
-        let currentScale = 1; let currentRotation = 0; let isScanning = false;
+        let isScanning = false;
 
         async function initAI() {
             const status = document.getElementById('sys-status');
+            const loadingBox = document.getElementById('main-loading-box');
+            const loadingBar = document.getElementById('main-loading-bar');
+            loadingBox.style.display = 'block';
+
             try {
                 window.env.allowLocalModels = false;
                 window.env.useBrowserCache = true;
+
+                const progress_callback = (progress) => {
+                    if (progress.status === 'progress') {
+                        loadingBar.style.width = `${progress.percent.toFixed(0)}%`;
+                        status.innerText = `LOADING AI: ${progress.percent.toFixed(0)}%`;
+                    }
+                };
+
                 processor = await window.AutoImageProcessor.from_pretrained('Xenova/dinov2-small');
-                model = await window.AutoModel.from_pretrained('Xenova/dinov2-small', { quantized: true });
+                model = await window.AutoModel.from_pretrained('Xenova/dinov2-small', { 
+                    quantized: true, 
+                    progress_callback 
+                });
+
                 status.innerText = "AI ONLINE";
                 status.className = "bg-green-50 text-green-600 px-3 py-1 rounded-full font-bold text-[9px] uppercase border border-green-100 italic";
+                loadingBox.style.display = 'none';
             } catch (e) { status.innerText = "AI ERROR"; }
         }
 
@@ -154,14 +169,14 @@
             try {
                 const response = await fetch(GAS_URL);
                 inventoryData = await response.json();
-                renderList(inventoryData);
-            } catch (err) { console.error("GAS Loading Error"); }
+                window.renderList(inventoryData);
+            } catch (err) { console.error("GAS Fail"); }
         }
 
         window.runTargetScan = async () => {
             if (!model || isScanning) return;
             const video = document.getElementById('video');
-            if (video.classList.contains('hidden')) return alert("Hãy mở Cam trước!");
+            if (video.classList.contains('hidden')) return alert("Mở Cam trước!");
 
             isScanning = true;
             const holoCanvas = document.getElementById('holo-canvas');
@@ -175,7 +190,6 @@
             const startTime = Date.now();
             holoCanvas.width = video.videoWidth; holoCanvas.height = video.videoHeight;
 
-            // Thuật toán Bounding Box (tìm vật thể tối trên nền sáng)
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = 100; tempCanvas.height = 75;
             const tCtx = tempCanvas.getContext('2d');
@@ -186,11 +200,7 @@
                 for (let x = 0; x < 100; x++) {
                     const i = (y * 100 + x) * 4;
                     const b = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
-                    if (b < 125) { 
-                        if (x < minX) minX = x; if (x > maxX) maxX = x;
-                        if (y < minY) minY = y; if (y > maxY) maxY = y;
-                        found = true;
-                    }
+                    if (b < 125) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; found = true; }
                 }
             }
             const b = found ? { x: minX, y: minY, w: maxX-minX, h: maxY-minY } : { x: 30, y: 25, w: 40, h: 30 };
@@ -220,10 +230,9 @@
             flare.style.display = 'block';
             document.getElementById('cam-container').classList.add('haptic-shake');
 
-            // AI LOGIC
             const aiCanvas = document.getElementById('canvas');
             const aiCtx = aiCanvas.getContext('2d');
-            aiCtx.filter = 'contrast(1.5) grayscale(1)';
+            aiCtx.filter = 'contrast(1.6) grayscale(1)';
             aiCtx.drawImage(video, 0, 0, 224, 224);
             const blob = await new Promise(r => aiCanvas.toBlob(r, 'image/jpeg'));
             const url = URL.createObjectURL(blob);
@@ -249,17 +258,15 @@
                 document.getElementById('ai-hud').style.display = 'none';
                 document.getElementById('lock-timer').style.display = 'none';
                 ctx.clearRect(0, 0, holoCanvas.width, holoCanvas.height);
-                renderList(filteredResults);
-                if(filteredResults.length === 0) alert("Không tìm thấy mã hàng khớp (>88%)");
+                window.renderList(filteredResults);
+                if(filteredResults.length === 0) alert("Không tìm thấy linh kiện khớp (>88%)");
             }, 600);
         };
 
         function cosineSimilarity(vA, vB) {
             let dot = 0, mA = 0, mB = 0;
             const len = Math.min(vA.length, vB.length);
-            for (let i = 0; i < len; i++) {
-                dot += vA[i] * vB[i]; mA += vA[i] * vA[i]; mB += vB[i] * vB[i];
-            }
+            for (let i = 0; i < len; i++) { dot += vA[i] * vB[i]; mA += vA[i] * vA[i]; mB += vB[i] * vB[i]; }
             return (mA === 0 || mB === 0) ? 0 : dot / (Math.sqrt(mA) * Math.sqrt(mB));
         }
 
@@ -270,7 +277,7 @@
             data.forEach(item => {
                 const matchP = item.score ? (item.score * 100).toFixed(1) : 0;
                 listContainer.innerHTML += `
-                    <div class="flex items-center gap-5 p-4 bg-white border border-slate-50 rounded-[22px] hover:border-blue-400 hover:shadow-xl transition-all duration-500 group text-center">
+                    <div class="flex items-center gap-5 p-4 bg-white border border-slate-50 rounded-[22px] hover:border-blue-400 hover:shadow-xl transition-all duration-500 group">
                         <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 cursor-zoom-in shadow-inner" onclick="openModal('${item.img}')">
                             <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" referrerpolicy="no-referrer" onerror="this.src='https://via.placeholder.com/150?text=Error'">
                         </div>
